@@ -1,0 +1,89 @@
+# Task 5.4 – broken services, just apply.
+apiVersion: v1
+kind: Namespace
+metadata: {name: svc-debug}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: orders, namespace: svc-debug}
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: orders}}
+  template:
+    metadata: {labels: {app: orders, tier: api}}
+    spec:
+      containers:
+        - name: orders
+          image: registry.k8s.io/e2e-test-images/agnhost:2.53
+          args: ["netexec", "--http-port=8080"]
+          ports: [{name: http, containerPort: 8080}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: orders, namespace: svc-debug}
+spec:
+  selector: {app: order}
+  ports: [{port: 80, targetPort: http}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: users, namespace: svc-debug}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: users}}
+  template:
+    metadata: {labels: {app: users}}
+    spec:
+      containers:
+        - name: users
+          image: nginx:1.27
+          ports: [{containerPort: 80}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: users, namespace: svc-debug}
+spec:
+  selector: {app: users}
+  ports: [{port: 80, targetPort: 8080}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: billing, namespace: svc-debug}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: billing}}
+  template:
+    metadata: {labels: {app: billing}}
+    spec:
+      containers:
+        - name: billing
+          image: nginx:1.27
+---
+apiVersion: v1
+kind: Service
+metadata: {name: billing, namespace: svc-debug}
+spec:
+  selector: {app: billing}
+  ports: [{port: 80}]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: deny-all, namespace: svc-debug}
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata: {name: allow-api, namespace: svc-debug}
+spec:
+  podSelector: {matchLabels: {tier: api}}
+  policyTypes: [Ingress]
+  ingress:
+    - from: [{podSelector: {matchLabels: {role: client}}}]
+---
+apiVersion: v1
+kind: Pod
+metadata: {name: client, namespace: svc-debug, labels: {role: client}}
+spec:
+  containers: [{name: c, image: "busybox:1.36", command: ["sleep", "infinity"]}]
