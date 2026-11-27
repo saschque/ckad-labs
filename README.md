@@ -50,7 +50,7 @@ Requirements: Docker (or Podman), kind, kubectl, helm, jq, openssl, curl.
 - **Start over between domains:** `kind delete cluster --name ckad && ./setup/create-cluster.sh`
   takes about a minute and frees everything.
 - **Close the rest:** browser tabs and IDEs compete for the same RAM.
-- **Windows/WSL2:** cap the VM in `%UserProfile%\\.wslconfig` (`[wsl2]` → `memory=5GB`, `swap=4GB`),
+- **Windows/WSL2:** cap the VM in `%UserProfile%\.wslconfig` (`[wsl2]` → `memory=5GB`, `swap=4GB`),
   otherwise Windows and Docker fight over the RAM.
 - The three-node cluster itself needs roughly 1.5–2 GB; many tasks rely on the worker nodes, so
   there is no single-node mode here.
